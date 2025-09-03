@@ -1,0 +1,63 @@
+# Docker Compose file for CircuitHub development environment
+version: '3.8'
+
+services:
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    container_name: circuithub_db_dev
+    environment:
+      POSTGRES_DB: circuithub_dev
+      POSTGRES_USER: circuithub_dev_user
+      POSTGRES_PASSWORD: circuithub_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U circuithub_dev_user -d circuithub_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching (optional for future use)
+  redis:
+    image: redis:7-alpine
+    container_name: circuithub_redis_dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Next.js application (development mode)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: circuithub_app_dev
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://circuithub_dev_user:circuithub_dev_password@postgres:5432/circuithub_dev?schema=public
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=your-nextauth-secret-here
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./storage:/app/storage
+    restart: unless-stopped
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:

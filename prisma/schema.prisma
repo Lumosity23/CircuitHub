@@ -1,0 +1,167 @@
+// This is your Prisma schema file for CircuitHub BOM Manager
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enum for BOM Item Type
+enum BomItemType {
+  GROUP
+  COMPONENT
+}
+
+// Users table for authentication
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String   // Hashed password with Argon2id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  projects     Project[]
+  libraries    Library[]
+  bomCommits   BomCommit[]
+
+  @@map("users")
+}
+
+// Projects table
+model Project {
+  id          String   @id @default(cuid())
+  ownerId     String
+  name        String
+  description String?
+  tags        String[] // Array of tags
+  readmePath  String?  // Path to CIRCUITME.md file
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  owner         User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  files         ProjectFile[]
+  bomItems      ProjectBomItem[]
+  bomCommits    BomCommit[]
+  snapshots     Snapshot[]
+
+  @@map("projects")
+}
+
+// Project files (gerber, pcb, pdf, etc.)
+model ProjectFile {
+  id        String   @id @default(cuid())
+  projectId String
+  path      String   // Storage path
+  filename  String
+  mime      String
+  size      Int      // File size in bytes
+  createdAt DateTime @default(now())
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_files")
+}
+
+// Libraries for reusable components
+model Library {
+  id          String   @id @default(cuid())
+  ownerId     String
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  owner      User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  components Component[]
+
+  @@unique([name, ownerId])
+  @@map("libraries")
+}
+
+// Components table (reusable parts)
+model Component {
+  id           String   @id @default(cuid())
+  libraryId    String
+  refInternal  String?  // Internal reference
+  mpn          String   // Manufacturer part number
+  footprint    String?  // Physical footprint
+  attributes   Json?    // Flexible attributes: {voltage, tolerance, package, ...}
+  imageUrl     String?  // URL to component image
+  datasheetUrl String?  // URL to datasheet
+  unitPrice    Decimal? @db.Decimal(12, 4) // Unit price
+  currency     String   @default("EUR") // Currency code
+  suppliers    Json?    // Array of suppliers: [{name,url,sku}]
+  stock        Int?     // Stock quantity (optional)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  library  Library          @relation(fields: [libraryId], references: [id], onDelete: Cascade)
+  bomItems ProjectBomItem[]
+
+  @@unique([libraryId, mpn])
+  @@map("components")
+}
+
+// Project BOM items (links components to projects)
+model ProjectBomItem {
+  id                  String      @id @default(cuid())
+  projectId           String
+  type                BomItemType @default(COMPONENT)
+  parentId            String?
+  componentId         String?     // Nullable for ad-hoc items or groups
+  lineLabel           String?     // Text reference if no component linked (or Group name)
+  quantity            Int         // For components, quantity. For groups, maybe 1 or null.
+  unitPriceOverride   Decimal?    @db.Decimal(12, 4)
+  notes               String?
+  attributesOverride  Json?
+  suppliersOverride   Json?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  // Relations
+  project             Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  component           Component?     @relation(fields: [componentId], references: [id], onDelete: SetNull)
+  parent              ProjectBomItem? @relation("BomItemHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children            ProjectBomItem[] @relation("BomItemHierarchy")
+
+  @@map("project_bom_items")
+}
+
+// BOM commits for versioning
+model BomCommit {
+  id        String   @id @default(cuid())
+  projectId String
+  authorId  String
+  message   String   // Commit message
+  diff      Json     // {added:[...], removed:[...], changed:[{id,before,after}]}
+  createdAt DateTime @default(now())
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("bom_commits")
+}
+
+// BOM snapshots for performance and restore
+model Snapshot {
+  id        String   @id @default(cuid())
+  projectId String
+  bomJson   Json     // Complete BOM as JSON
+  createdAt DateTime @default(now())
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("snapshots")
+}

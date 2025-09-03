@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo Animé - Suivi Souris Corrigé</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #000000;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .container {
+            width: 90%;
+            max-width: 250px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <svg width="100%" height="100%" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                @keyframes blink {
+                    0%, 95%, 100% { transform: scaleY(1); }
+                    97.5% { transform: scaleY(0.05); }
+                }
+
+                .bot-group-anim {
+                    transform-origin: center;
+                }
+                
+                .eyes-group-anim {
+                    animation: blink 7s infinite;
+                    transform-origin: center;
+                }
+            </style>
+
+            <defs>
+                <radialGradient id="bodyGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                    <stop offset="0%" style="stop-color:#cce7ff;" />
+                    <stop offset="60%" style="stop-color:#3399ff;" />
+                    <stop offset="100%" style="stop-color:#0055b3;" />
+                </radialGradient>
+                
+                <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+                </filter>
+            </defs>
+            
+            <g id="mouse-tracker-group">
+                <g class="bot-group-anim">
+
+                    <!-- Halo extérieur -->
+                    <circle cx="100" cy="100" r="85" fill="#3a4c6a" opacity="0.7" filter="url(#softGlow)" />
+                    
+                    <!-- Corps principal -->
+                    <circle cx="100" cy="100" r="80" fill="url(#bodyGradient)" />
+                    
+                    <!-- Yeux -->
+                    <g id="eyes-tracker-group">
+                        <g class="eyes-group-anim">
+                            <rect x="70" y="86" width="12" height="28" rx="6" ry="6" fill="#ffffff" />
+                            <rect x="118" y="86" width="12" height="28" rx="6" ry="6" fill="#ffffff" />
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </svg>
+
+    </div>
+
+    <script>
+        // Références aux éléments SVG
+        const head = document.getElementById('mouse-tracker-group');
+        const eyes = document.getElementById('eyes-tracker-group');
+
+        // Paramètres de mouvement
+        const headMoveFactor = 0.05;
+        const eyesMoveFactor = 0.1;
+        const maxEyeTravel = 15;
+        
+        // Variables pour le suivi fluide
+        let targetX = 0, targetY = 0;
+        let currentX = 0, currentY = 0;
+        const smoothing = 0.05;
+
+        window.addEventListener('mousemove', (event) => {
+            targetX = (event.clientX - window.innerWidth / 2);
+            targetY = (event.clientY - window.innerHeight / 2);
+        });
+
+        function animate() {
+            // Lissage du mouvement
+            currentX += (targetX - currentX) * smoothing;
+            currentY += (targetY - currentY) * smoothing;
+            
+            // 1. Mouvement de la tête (désactivé pour enlever l'effet de saut)
+            // const headX = currentX * headMoveFactor;
+            // const headY = currentY * headMoveFactor;
+            // head.setAttribute('transform', `translate(${headX}, ${headY})`);
+            
+            // 2. Mouvement des yeux
+            const eyesX = currentX * eyesMoveFactor;
+            // CORRECTION DE LA COQUILLE ICI :
+            const eyesY = currentY * eyesMoveFactor; 
+            
+            const clampedEyesX = Math.max(-maxEyeTravel, Math.min(maxEyeTravel, eyesX));
+            const clampedEyesY = Math.max(-maxEyeTravel, Math.min(maxEyeTravel, eyesY));
+            
+            eyes.setAttribute('transform', `translate(${clampedEyesX}, ${clampedEyesY})`);
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+
+</body>
+</html>

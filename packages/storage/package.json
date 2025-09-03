@@ -1,0 +1,17 @@
+{
+  "name": "@circuithub/storage",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/uuid": "^10.0.0"
+  }
+}

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200"
+     xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Halo radial -->
+    <radialGradient id="haloGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"  stop-color="#00F5FF" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#00F5FF" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Glow des yeux -->
+    <filter id="eyeGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Halo lumineux -->
+  <circle cx="100" cy="100" r="85" fill="url(#haloGrad)"/>
+
+  <!-- Corps principal -->
+  <circle cx="100" cy="100" r="55" fill="#0AEFFF" stroke="#00B4CC" stroke-width="2"/>
+
+  <!-- Antenne -->
+  <line x1="100" y1="45" x2="100" y2="10" stroke="#0AEFFF" stroke-width="3"/>
+  <circle cx="100" cy="10" r="5" fill="#FFFFFF"/>
+
+  <!-- Yeux (entièrement blanc-beige lumineux) -->
+  <circle id="eyeL" cx="80"  cy="90" r="12" fill="#FFFBEA" filter="url(#eyeGlow)"/>
+  <circle id="eyeR" cx="120" cy="90" r="12" fill="#FFFBEA" filter="url(#eyeGlow)"/>
+
+  <!-- Particules orbitales -->
+  <g id="particles">
+    <circle cx="100" cy="30" r="3" fill="#00F5FF">
+      <animateTransform attributeName="transform"
+                        type="rotate"
+                        from="0 100 100"
+                        to="360 100 100"
+                        dur="6s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="100" cy="30" r="2" fill="#00F5FF">
+      <animateTransform attributeName="transform"
+                        type="rotate"
+                        from="180 100 100"
+                        to="540 100 100"
+                        dur="4s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Script de suivi de souris -->
+  <script><![CDATA[
+    document.addEventListener('mousemove', e => {
+      const svg = document.documentElement;
+      const rect = svg.getBoundingClientRect();
+      const cX = rect.left + rect.width / 2;
+      const cY = rect.top  + rect.height / 2;
+      const angle = Math.atan2(e.clientY - cY, e.clientX - cX);
+      const max = 5;
+
+      const dx = Math.cos(angle) * max;
+      const dy = Math.sin(angle) * max;
+
+      document.getElementById('eyeL').setAttribute('cx', 80 + dx);
+      document.getElementById('eyeL').setAttribute('cy', 90 + dy);
+      document.getElementById('eyeR').setAttribute('cx', 120 + dx);
+      document.getElementById('eyeR').setAttribute('cy', 90 + dy);
+    });
+  ]]></script>
+</svg>

@@ -1,0 +1,42 @@
+# Docker Compose pour développement - Base de données uniquement
+
+services:
+  # PostgreSQL database pour développement
+  postgres:
+    image: postgres:15-alpine
+    container_name: circuithub_db_dev
+    environment:
+      POSTGRES_DB: circuithub_dev
+      POSTGRES_USER: circuithub_dev_user
+      POSTGRES_PASSWORD: circuithub_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U circuithub_dev_user -d circuithub_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis pour le cache (optionnel)
+  redis:
+    image: redis:7-alpine
+    container_name: circuithub_redis_dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:
