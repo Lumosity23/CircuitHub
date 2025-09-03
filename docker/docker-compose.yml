@@ -1,5 +1,5 @@
 # Docker Compose file for CircuitHub development environment
-version: '3.8'
+
 
 services:
   # PostgreSQL database
@@ -38,7 +38,9 @@ services:
 
   # Next.js application
   app:
-    build: .
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
     container_name: circuithub_app
     environment:
       - NODE_ENV=production

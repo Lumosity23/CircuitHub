@@ -1,5 +1,5 @@
 # Docker Compose file for CircuitHub development environment
-version: '3.8'
+
 
 services:
   # PostgreSQL database
@@ -14,7 +14,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_dev_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ../init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U circuithub_dev_user -d circuithub_dev"]
       interval: 10s
@@ -39,8 +39,8 @@ services:
   # Next.js application (development mode)
   app:
     build:
-      context: .
-      dockerfile: Dockerfile.dev
+      context: ..
+      dockerfile: docker/Dockerfile.dev
     container_name: circuithub_app_dev
     environment:
       - NODE_ENV=development
@@ -53,9 +53,9 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - .:/app
+      - ..:/app
       - /app/node_modules
-      - ./storage:/app/storage
+      - ../storage:/app/storage
     restart: unless-stopped
 
 volumes:
