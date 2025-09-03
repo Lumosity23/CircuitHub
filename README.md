@@ -1,6 +1,6 @@
 # CircuitHub - BOM Manager pour Projets Électroniques
 
-![CircuitHub Logo](public/logo.svg)
+![CircuitHub Logo](assets/logo.html)
 
 **CircuitHub** est un gestionnaire de Bill of Materials (BOM) moderne pour projets électroniques, inspiré de l'approche de GitHub. Il permet de gérer des composants, d'importer des BOM depuis des fichiers CSV, de versionner les modifications, et de collaborer efficacement sur des projets électroniques.
 
